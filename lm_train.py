@@ -23,7 +23,12 @@ logger = logging.getLogger(__name__)
 if len(sys.argv) == 1:
     raise ValueError("Missing configuration file. Please follow the instructions in the README.")
 
-config_file = sys.argv[1] if len(sys.argv) == 2 else sys.argv[2] # deepspeed will add --local_rank as arg
+config_file = sys.argv[1]
+resume_from_checkpoint = None
+if "--resume_from_checkpoint" in sys.argv:
+    resume_index = sys.argv.index("--resume_from_checkpoint")
+    if resume_index + 1 < len(sys.argv):
+        resume_from_checkpoint = sys.argv[resume_index + 1]
 
 @dataclass
 class ModelConfig:
@@ -91,7 +96,8 @@ trainer = Trainer(
     tokenizer=tokenizer,
 )
 
-trainer.train()
+logger.info(f"Resume checkpoint: {resume_from_checkpoint or 'None'}")
+trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 trainer.save_model(training_args.output_dir)
 
 
