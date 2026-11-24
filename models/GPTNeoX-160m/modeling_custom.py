@@ -403,24 +403,33 @@ class GPTNeoXFlashAttention2(GPTNeoXAttention):
         if key.dtype != target_dtype:
             key = key.to(target_dtype)
 
-        #TODO: Permute to get the expected shape for Flash Attention
-        query = ...
-        key = ...
-        value = ...
+        # Permute from [batch, heads, sequence, head_size] to
+        # [batch, sequence, heads, head_size], the layout required by Flash Attention.
+        batch_size = query.shape[0]
+        query = query.transpose(1, 2).contiguous()
+        key = key.transpose(1, 2).contiguous()
+        value = value.transpose(1, 2).contiguous()
 
         attention_dropout = self.config.attention_dropout if self.training else 0.0
 
-        #TODO: Compute attention with _flash_attention_forward
-        attn_weights = ...
+        # Compute attention. Flash Attention does not expose actual attention weights.
+        attn_output = _flash_attention_forward(
+            query=query,
+            key=key,
+            value=value,
+            attention_mask=attention_mask,
+            attention_dropout=attention_dropout,
+            flash_attn_uses_top_left_mask=self._flash_attn_uses_top_left_mask,
+        )
 
-        #TODO: Reshape outputs before projection
-        attn_output = ...
+        # Restore [batch, sequence, hidden_size] before the dense output projection.
+        attn_output = attn_output.reshape(batch_size, query_length, self.hidden_size).contiguous()
 
         attn_output = self.dense(attn_output)
 
         outputs = (attn_output, layer_past)
         if output_attentions:
-            outputs += (attn_weights,)
+            outputs += (None,)  # Flash Attention does not return attention weight matrices.
 
         return outputs
 
@@ -1467,7 +1476,7 @@ class GPTNeoXForTokenClassification(GPTNeoXPreTrainedModel):
 
 @add_start_docstrings(
     """
-    The GPT-NeoX Model transformer with a span classification head on top for extractive question-answering tasks like
+    The GPTNeoX Model transformer with a span classification head on top for extractive question-answering tasks like
     SQuAD (a linear layer on top of the hidden-states output to compute `span start logits` and `span end logits`).
     """,
     GPT_NEOX_START_DOCSTRING,
