@@ -414,12 +414,13 @@ class GPTNeoXFlashAttention2(GPTNeoXAttention):
 
         # Compute attention. Flash Attention does not expose actual attention weights.
         attn_output = _flash_attention_forward(
-            query=query,
-            key=key,
-            value=value,
-            attention_mask=attention_mask,
-            attention_dropout=attention_dropout,
-            flash_attn_uses_top_left_mask=self._flash_attn_uses_top_left_mask,
+            query,
+            key,
+            value,
+            attention_mask,
+            query_length,
+            True,
+            attention_dropout,
         )
 
         # Restore [batch, sequence, hidden_size] before the dense output projection.
@@ -1307,7 +1308,7 @@ class GPTNeoXForSequenceClassification(GPTNeoXPreTrainedModel):
         position_ids: Optional[torch.LongTensor] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
         head_mask: Optional[torch.FloatTensor] = None,
-        past_key_values: Optional[Union[Cache, Tuple[Tuple[torch.FloatTensor]]]] = None,
+        past_key_values: Optional[Union[Cache, Tuple[Tuple[torch.Tensor, ...], ...]]] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
@@ -1419,7 +1420,7 @@ class GPTNeoXForTokenClassification(GPTNeoXPreTrainedModel):
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Union[Cache, Tuple[Tuple[torch.Tensor]]]] = None,
+        past_key_values: Optional[Union[Cache, Tuple[Tuple[torch.Tensor, ...], ...]]] = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         token_type_ids: Optional[torch.LongTensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
