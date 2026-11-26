@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 import logging
 import torch
 from datasets import load_dataset
+from transformers.trainer_utils import get_last_checkpoint
 import math
 import sys
 
@@ -49,8 +50,12 @@ class ModelConfig:
 parser = HfArgumentParser((ModelConfig, TrainingArguments))
 model_config, training_args = parser.parse_json_file(json_file=config_file)
 
+if resume_from_checkpoint is None:
+    resume_from_checkpoint = get_last_checkpoint(training_args.output_dir)
+
 logger.info(f"Base model: {model_config.model_to_train}")
 logger.info(f"Saving to: {training_args.output_dir}")
+logger.info(f"Resume checkpoint: {resume_from_checkpoint or 'None (starting from model_to_train)'}")
 
 model = AutoModelForCausalLM.from_pretrained(model_config.model_to_train, 
                                              torch_dtype=torch.bfloat16, 
@@ -96,7 +101,6 @@ trainer = Trainer(
     tokenizer=tokenizer,
 )
 
-logger.info(f"Resume checkpoint: {resume_from_checkpoint or 'None'}")
 trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 trainer.save_model(training_args.output_dir)
 
