@@ -1,0 +1,23 @@
+{
+    "model_to_train": "models/GPTNeoX-160M-WikiText-512-flash",
+    "output_dir": "models/GPTNeoX-160M-WikiText-2048-flash-gradient-checkpointing",
+    "run_name": "GPTNeoX-160M-WikiText-2048-flash-gradient-checkpointing",
+    "report_to": "wandb",
+    "eval_strategy": "epoch",
+    "logging_steps": 1,
+    "num_train_epochs": 1,
+    "save_strategy": "steps",
+    "save_steps": 500,
+    "save_total_limit": 3,
+    "bf16": true,
+    "seq_len": 2048,
+    "attention_type": "flash_attention_2",
+    "gradient_checkpointing": true,
+    "dataset": "wikitext",
+    "deepspeed": null,
+    "per_device_train_batch_size": 4,
+    "learning_rate": 5e-4,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "lr_scheduler_type": "cosine"
+}
