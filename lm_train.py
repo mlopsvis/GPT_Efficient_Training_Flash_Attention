@@ -50,6 +50,8 @@ class ModelConfig:
 parser = HfArgumentParser((ModelConfig, TrainingArguments))
 model_config, training_args = parser.parse_json_file(json_file=config_file)
 
+os.makedirs(training_args.output_dir, exist_ok=True)
+
 if resume_from_checkpoint is None:
     resume_from_checkpoint = get_last_checkpoint(training_args.output_dir)
 
